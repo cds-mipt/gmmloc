@@ -2,7 +2,7 @@
 
 #include "gmmloc/utils/protobuf_utils.h"
 
-#include "GMM.pb.h"
+#include "gmmloc/GMM.pb.h"
 
 namespace gmmloc {
 
