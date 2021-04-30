@@ -1,0 +1,54 @@
+FROM osrf/ros:melodic-desktop-full
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN set -x && \
+  apt-get update -y && \
+  apt-get upgrade -y --no-install-recommends && \
+  : "basic dependencies" && \
+  apt-get install -y \
+    build-essential \
+    pkg-config \
+    cmake \
+    git \
+    wget \
+    curl \
+    tar \
+    unzip \
+    libopencv-dev \
+    python-wstool \
+    python-catkin-tools \
+    autoconf \
+    libtool \
+    m4 \
+    automake \
+    gdb \
+    python-pip && \
+  : "remove cache" && \
+  apt-get autoremove -y && \
+  rm -rf /var/lib/apt/lists/*
+
+
+RUN python -m pip install --upgrade pip && \
+    python -m pip install scikit-learn tqdm
+
+
+RUN cd /tmp && \
+    git clone https://github.com/strawlab/python-pcl.git && \
+    cd python-pcl && \
+    git checkout v0.3.0rc1 && \
+    python setup.py build_ext -i && \
+    python setup.py install
+
+
+ARG USER=docker_gmmloc
+ARG UID=1000
+ARG GID=1000
+# default password
+ARG PW=user
+
+# add user and his password
+RUN useradd -m ${USER} --uid=${UID} && echo "${USER}:${PW}" | chpasswd && adduser ${USER} sudo
+WORKDIR /home/${USER}
+RUN mkdir -p catkin_ws/src && chown -R ${UID}:${GID} /home/${USER}
+USER ${UID}:${GID}
