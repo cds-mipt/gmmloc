@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
+#include <fstream>
 
 #include "gmmloc/gmm/gmm_utils.h"
 
@@ -58,6 +59,44 @@ GMM::GMM(const GaussianComponents &components)
   LOG(INFO) << "#deg: " << count_deg
             << " #non_deg: " << components_.size() - count_deg;
 
+  // Cached implementation
+  std::string filename = "/home/docker_gmmloc/catkin_ws/cache.txt";
+  std::ifstream fin(filename, std::ios_base::in);
+  if (!fin) {
+    fin.close();
+    std::cout << "Writing neighbours to " << filename << " and exit" << std::endl;
+    std::ofstream fout(filename, std::ios_base::out);
+    for (int i = 0; i < components_.size(); ++i) {
+      std::cout << i << "/" << components_.size() << std::endl;
+      auto &comp = components_[i];
+      for (int j = 0; j < components_.size(); ++j) {
+        if (i == j)
+          continue;
+        auto &comp2 = components_[j];
+        double dist = GMMUtility::BHCoefficient(*comp, *comp2);
+        if (dist < gmmmap::neighbor_dist_thresh) {
+          fout << i << " " << j << " " << dist << std::endl;
+        }
+      }
+    }
+    exit(EXIT_SUCCESS);
+  } else {
+    std::cout << "Reading neighbours from " << filename << std::endl;
+    int i = -1, j = -1;
+    double dist = 0;
+    while (fin >> i >> j >> dist) {
+      auto &comp = components_[i];
+      auto &comp2 = components_[j];
+      GaussianComponent::NeighbourInfo info;
+      info.ptr = comp2;
+      info.dist = dist;
+      comp->nbs_.push_back(info);
+    }
+    std::cout << "Reading complete" << std::endl;
+  }
+
+  // Original implementation
+  /*
   for (auto &comp : components_) {
     int count_comp = 0;
 
@@ -76,6 +115,7 @@ GMM::GMM(const GaussianComponents &components)
       }
     }
   }
+  */
 
   // double sum = std::accumulate(v.begin(), v.end(), 0.0);
   // double mean = sum / v.size();
