@@ -54,19 +54,20 @@ TrackStat Tracking::track(Frame *frame) {
       stat_.num_match_inliers = 10;
       stat_.res = false;
 
-      LOG(ERROR) << "tracking failure..";
+      LOG(ERROR) << "tracking with motion model failure..";
     }
   }
 
   // track with keyframe
   if (!stat_.res) {
+    stat_.res = true;
     int num_matches = trackKeyFrame();
 
     if (num_matches < 10) {
       stat_.num_match_inliers = 10;
       stat_.res = false;
 
-      LOG(ERROR) << "tracking failure..";
+      LOG(ERROR) << "tracking with keyframe failure..";
       return stat_;
     }
   }
